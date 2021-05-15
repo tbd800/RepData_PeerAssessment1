@@ -7,19 +7,74 @@ output:
 
 
 ## Loading and preprocessing the data
-
+activity <- read.csv("activity.csv")
+activity$date <- as.POSIXct(activity$date)
 
 
 ## What is mean total number of steps taken per day?
+totalsteps <- tapply(activity$steps, activity$date,sum)
 
+hist(totalsteps, xlab = "number of steps", main = "The total number of steps taken each day")
+
+## calculate and report the mean and median of total number of steps taken per day
+
+stepsmean <- mean(tapply(activity$steps, activity$date, sum), na.rm = TRUE)
+stepsmean
+
+stepsmedian <- median(tapply(activity$steps, activity$date, sum), na.rm = TRUE)
+stepsmedian
 
 
 ## What is the average daily activity pattern?
+stepsinternal <- tapply(activity$steps, activity$interval, mean, na.rm = TRUE)
 
+plot(stepsinternal, type = "l", main = "time series plot", xlab = "5 minute interval", ylab = "the average number of steps")
+
+which.max(stepsinternal)
 
 
 ## Imputing missing values
+stepsNA <- sum(is.na(activity$steps))
+dateNA <- sum(is.na(activity$date))
+intervalNA <- sum(is.na(activity$interval))
+
+table(is.na(activity$steps), activity$interval)
+
+barplot(is.na(activity$steps))
+
+
+dataFix <- activity
+for (i in unique(dataFix$interval)) {
+  dataFix$steps[is.na(dataFix$steps) & dataFix$interval == i] <- round(mean(dataFix$steps[data$interval == i], na.rm = T))
+}
+
+stepscorrected <- tapply(dataFix$steps, dataFix$date, sum)
+
+hist(stepscorrected, xlab = "number of steps", main = "the total number of steps taken each day Fix")
+
+meanDaycorrected <- mean(stepscorrected)
+medianDaycorrected <- median(stepscorrected)
+
+stepsmean - meanDaycorrected
+stepsmedian - medianDaycorrected
 
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+dataFix$weekD <- as.POSIXlt(activity$date)$wday == 0 | as.POSIXlt(activity$date)$wday == 6
+
+dataFix$weekD <- factor(dataFix$weekD, levels = c(F, T), labels = c("weekday", "weekend"))
+
+stepsWeekD <- tapply(dataFix$steps[dataFix$weekD == "weekday"], dataFix$interval[dataFix$weekD == "weekday"], mean)
+
+stepsWeekE <- tapply(dataFix$steps[dataFix$weekD == "weekend"], dataFix$interval[dataFix$weekD == "weekend"], mean)
+
+
+par(mfrow = c(2,1))
+plot(stepsWeekD, type = "l", main = "weekdays"
+     ,xlab = "the 5-minute interval"
+     ,ylab = "the average number of steps")
+
+plot(stepsWeekE, type = "l", main = "weekdends"
+     ,xlab = "the 5-minute interval"
+     ,ylab = "the average number of steps")
